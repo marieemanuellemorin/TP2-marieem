@@ -168,8 +168,8 @@ class Quoridor():
                     raise QuoridorError
                 elif self.position[1] > 8:
                     raise QuoridorError
-            for v in self.murs['verticaux']:
-                if self.position == (v[0]+1, v[1]+1):
+            for h in self.murs['horizontaux']:
+                if self.position == (h[0]+1, h[1]-1):
                     raise QuoridorError
             self.murs['verticaux'].append(position)
         self.joueurs[self.numero-1]['murs'] = self.joueurs[self.numero-1]['murs']-1
@@ -240,3 +240,84 @@ class Quoridor():
                 print(lignehalf)
         print(lfoot1)
         print(lfoot2)
+
+    def jouer_coup(self, numero):
+        self.numero = numero
+        if self.numero != 1 or self.numero != 2:
+            raise QuoridorError
+        chemin1 = nx.shortest_path(graphe, self.joueurs[0]['pos'], 'B1')
+        chemin2 = nx.shortest_path(graphe, self.joueurs[1]['pos'], 'B2')
+        elif self.numero == 1:
+            if self.joueurs[0]['murs'] == 0:
+                self.deplacer_jeton(self.numero, chemin1[0])
+                self.joueurs[self.numero-1]['pos'] = chemin1[0] 
+            else:
+                if len(chemin2) >= 4:
+                    self.deplacer_jeton(self.numero, chemin1[0])
+                    self.joueurs[self.numero-1]['pos'] = chemin1[0]
+                else:
+                    listepostesth = []
+                    listepostestv = []
+                    for x in range(1,9):
+                        for y in range(1,9):
+                            positiontest = (x, y)
+                            for h in self.murs['horizontaux']:
+                                if positiontest == h or positiontest == (h[0]+1, h[1]) or positiontest == (h[0]-1, h[1]):
+                                    listepostesth = listepostesth
+                                else:
+                                     for v in self.murs['verticaux']:
+                                        if positiontest == (v[0]-1, v[1]+1):
+                                            listepostesth = listepostesth
+                                        else:
+                                            listepostesth.append(positiontest)
+                            #murs vertical
+                            for v in self.murs['verticaux']:
+                                if positiontest == v or positiontest == (h[0], h[1]+1) or positiontest == (h[0], h[1]-1):
+                                    listepostestv = listepostestv
+                                else:
+                                    for h in self.murs['horizontaux']:
+                                        if positiontest == (h[0]+1, v[1]-1):
+                                            listepostestv = listepostestv
+                                            else:
+                                                listepostestv.append(positiontestv)
+                    self.placer_mur(self.numero, listepostestv[0], 'vertical')
+                    self.murs['verticaux'].append(position)
+                    self.joueurs[self.numero-1]['murs'] = self.joueurs[self.numero-1]['murs']-1    
+                    
+                            
+        elif self.numero == 2:
+            if self.joueurs[1]['murs'] == 0:
+                self.deplacer_jeton(self.numero, chemin2[0])
+                self.joueurs[self.numero-1]['pos'] = chemin2[0] 
+            else:
+                if len(chemin1) >= 4:
+                    self.deplacer_jeton(self.numero, chemin2[0])
+                    self.joueurs[self.numero-1]['pos'] = chemin2[0] 
+                else:
+                    listepostesth = []
+                    listepostestv = []
+                    for x in range(1,9):
+                        for y in range(1,9):
+                            positiontest = (x, y)
+                            for h in self.murs['horizontaux']:
+                                if positiontest == h or positiontest == (h[0]+1, h[1]) or positiontest == (h[0]-1, h[1]):
+                                    listepostesth = listepostesth
+                                else:
+                                     for v in self.murs['verticaux']:
+                                        if positiontest == (v[0]-1, v[1]+1):
+                                            listepostesth = listepostesth
+                                        else:
+                                            listepostesth.append(positiontest)
+                            #murs vertical
+                            for v in self.murs['verticaux']:
+                                if positiontest == v or positiontest == (h[0], h[1]+1) or positiontest == (h[0], h[1]-1):
+                                    listepostestv = listepostestv
+                                else:
+                                    for h in self.murs['horizontaux']:
+                                        if positiontest == (h[0]+1, v[1]-1):
+                                            listepostestv = listepostestv
+                                            else:
+                                                listepostestv.append(positiontestv)
+                    self.placer_mur(self.numero, listepostestv[0], 'vertical')
+                    self.murs['verticaux'].append(position)
+                    self.joueurs[self.numero-1]['murs'] = self.joueurs[self.numero-1]['murs']-1
