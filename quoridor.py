@@ -91,111 +91,125 @@ def construire_graphe(joueurs, murs_horizontaux, murs_verticaux):
         "verticaux": [(6, 2), (4, 4), (2, 5), (7, 5), (7, 7)]
     }
 }
+class QuoridorError(Exception):
+    pass
+
 
 class Quoridor():
     
     def __init__(self, joueurs, murs):
         self.joueurs = joueurs
         self.murs = murs
-        if self.joueurs[0] == str:
-            namej1 = self.joueurs[0]
-            positionj1 = (5,1)
-            nbmur1 = 10
-            namej2 = self.joueurs[1]
-            positionj2 = (5,9)
-            nbmur2 = 10
-            self.joueurs = {"joueurs": [{"nom": namej1, "murs": nbmur1, "pos": positionj1},{"nom": namej2, "murs": nbmur2, "pos": positionj2}]}
-        elif self.joueurs[0] == dict:
-            self.joueurs = joueurs
+        if type(self.joueurs) is list:
+            if len(self.joueurs) != 2:
+                raise QuoridorError('2 joueurs sont nécessaire pour initialiser une partie')
+            elif type(self.joueurs[0]) is str and type(self.joueurs[1]) is str:
+                namej1 = self.joueurs[0]
+                positionj1 = (5,1)
+                nbmur1 = 10
+                namej2 = self.joueurs[1]
+                positionj2 = (5,9)
+                nbmur2 = 10
+                self.joueurs = {"joueurs": [{"nom": namej1, "murs": nbmur1, "pos": positionj1},{"nom": namej2, "murs": nbmur2, "pos": positionj2}]}
+            elif type(self.joueurs[0]) is dict and type(self.joueurs[1]) is dict:
+                self.joueurs = {"joueurs": self.joueurs}
+            else:
+                raise QuoridorError('Joueurs doit soit être une liste de string, soit une liste de dictionnaires')
         else:
-            raise QuoridorError
-        
-            
+            raise QuoridorError('Joueurs doit être une liste')
 
     def déplacer_jeton(self, numero, position):
         self.numero = numero
         self.position = position
-        if self.numero != 1 or self.numero != 2:
-            raise QuoridorError
-        elif self.position[0] < 1 or self.position[0] > 9 or self.position[1] < 1 or self.position[1] > 9:
-            raise QuoridorError
+        if (self.numero != 1) and (self.numero != 2):
+            raise QuoridorError("Le numéro du joueur doit soit être 1 ou 2")
+        if self.position[0] < 1 or self.position[0] > 9 or self.position[1] < 1 or self.position[1] > 9:
+            raise QuoridorError("La position désirée se trouve hors de la grille de jeu")
         else:
-            graphe = construire_graphe([self.joueurs['pos'] for j in self.joueurs['joueurs']], 
-            self.murs['murs']['horizontaux'],
-            self.murs['murs']['verticaux'])
-            deplacementadmissibles = list(graphe.successors(self.joueurs[numero-1]['pos']))
+            graphe = construire_graphe([self.joueurs['joueurs'][0]['pos'],self.joueurs['joueurs'][1]['pos']],
+            self.murs['horizontaux'],
+            self.murs['verticaux'])
+            deplacementadmissibles = list(graphe.successors(self.joueurs['joueurs'][self.numero-1]['pos']))
+            dep = []
             for p in deplacementadmissibles:
-                if p == self.position:
-                    self.joueurs[numero-1]['pos'] = self.position
-                else:
-                    raise QuoridorError
+                if self.position == p:
+                    dep.append(p)
+            if len(dep) == 1:
+                self.joueurs['joueurs'][self.numero-1]['pos'] = self.position
+            else:
+                raise QuoridorError("Ce déplacement est invalide")
         
     def placer_mur(self, numero, position, orientation):
         self.numero = numero
         self.position = position
         self.orientation = orientation
-        if self.numero != '1' or self.numero != '2':
-            raise QuoridorError
-        elif self.orientation != 'horizontal' or self.orientation != 'vertical':
-            raise QuoridorError
-        elif self.position != tuple:
-            raise QuoridorError
-        elif self.joueurs['murs'] == 0:
-            raise QuoridorError
+        if self.numero != 1 and self.numero != 2:
+            raise QuoridorError('Le numéro du joueur doit soit être 1 ou 2')
+        elif self.orientation != 'horizontal' and self.orientation != 'vertical':
+            raise QuoridorError("L'orientation du mur doit soit être 'horizontal' ou 'vertical'")
+        elif type(self.position) is not tuple:
+            raise QuoridorError('la coordonnée doit être entrée sous forme de tuple')
+        elif len(self.position) != 2:
+            raise QuoridorError('la coordonnée doit être de la forme (x, y)')
+        elif self.joueurs['joueurs'][self.numero - 1]['murs'] == 0:
+            raise QuoridorError('Il ne reste plus de murs disponibles à placer')
         # murs horizontaux
         elif self.orientation == 'horizontal':
+            if self.position[0] < 1 or self.position[0] > 8 or self.position[1] < 2 or self.position[1] > 9:
+                raise QuoridorError('La position désirée est hors de la grille de jeu')
             for h in self.murs['horizontaux']:
                 if self.position == h:
-                    raise QuoridorError
+                    raise QuoridorError('Un mur est déjà placé à cet endroit')
                 elif self.position == (h[0]+1, h[1]):
-                    raise QuoridorError
+                    raise QuoridorError('Un mur est déjà placé à cet endroit')
                 elif self.position == (h[0]-1, h[1]):
-                    raise QuoridorError
-                elif self.position[0] > 8:
-                    raise QuoridorError
+                    raise QuoridorError('Un mur est déjà placé à cet endroit')
             for v in self.murs['verticaux']:
                 if self.position == (v[0]-1, v[1]+1):
-                    raise QuoridorError
+                    raise QuoridorError('Ce mur croiserait un mur vertical')
             self.murs['horizontaux'].append(position)
         # murs verticaux
         elif self.orientation == 'vertical':
+            if self.position[0] < 2 or self.position[0] > 9 or self.position[1] < 1 or self.position[1] > 8:
+                raise QuoridorError('La position désirée est hors de la grille de jeu')
             for v in self.murs['verticaux']:
                 if self.position == v:
-                    raise QuoridorError
+                    raise QuoridorError('Un mur est déjà placé à cet endroit')
                 elif self.position == (h[0], h[1]+1):
-                    raise QuoridorError
+                    raise QuoridorError('Un mur est déjà placé à cet endroit')
                 elif self.position == (h[0], h[1]-1):
-                    raise QuoridorError
-                elif self.position[1] > 8:
-                    raise QuoridorError
+                    raise QuoridorError('Un mur est déjà placé à cet endroit')
             for h in self.murs['horizontaux']:
                 if self.position == (h[0]+1, h[1]-1):
-                    raise QuoridorError
+                    raise QuoridorError('Ce mur croiserait un mur horizontal')
             self.murs['verticaux'].append(position)
-        self.joueurs[self.numero-1]['murs'] = self.joueurs[self.numero-1]['murs']-1
+        self.joueurs['joueurs'][self.numero-1]['murs'] = self.joueurs['joueurs'][self.numero-1]['murs']-1
 
     def partie_terminée(self):
-        if nx.has_path(graphe, self.joueurs[0]['pos'], 'B1') == False:
-            return self.joueurs[1]['nom']
-        if nx.has_path(graphe, self.joueurs[1]['pos'], 'B2') == False:
-            return self.joueurs[0]['nom']
-        if self.joueurs[0]['pos'][1] == 9:
-            return self.joueurs[0]['nom']
-        if self.joueurs[1]['pos'][1] == 1:
-            return self.joueurs[1]
+        graphe = construire_graphe([self.joueurs['joueurs'][0]['pos'],self.joueurs['joueurs'][1]['pos']],
+            self.murs['horizontaux'],
+            self.murs['verticaux'])
+        if nx.has_path(graphe, self.joueurs['joueurs'][0]['pos'], 'B1') == False:
+            return self.joueurs['joueurs'][1]['nom']
+        if nx.has_path(graphe, self.joueurs['joueurs'][1]['pos'], 'B2') == False:
+            return self.joueurs['joueurs'][0]['nom']
+        if self.joueurs['joueurs'][0]['pos'][1] == 9:
+            return self.joueurs['joueurs'][0]['nom']
+        if self.joueurs['joueurs'][1]['pos'][1] == 1:
+            return self.joueurs['joueurs'][1]['nom']
         return False
 
     def état_partie(self):
         état = dict(self.joueurs)
+        self.murs = {"murs" : self.murs}
         état.update(self.murs)
         return état
         
-    def __str__(self, état):
-        self.état = état
-        position_idul = self.état["joueurs"][0]["pos"]
-        position_auto = self.état["joueurs"][1]["pos"]
-        murh = self.état["murs"]["horizontaux"]
-        murv = self.état["murs"]["verticaux"]
+    def __str__(self):
+        position_idul = self.joueurs["joueurs"][0]["pos"]
+        position_auto = self.joueurs["joueurs"][1]["pos"]
+        murh = self.murs["horizontaux"]
+        murv = self.murs["verticaux"]
         lhead1 = '   -----------------------------------'
         lfoot1 = '--|-----------------------------------'
         lfoot2 = '  | 1   2   3   4   5   6   7   8   9 '
@@ -221,7 +235,7 @@ class Quoridor():
                 half[murh[i][1]-1][murh[i][0]-1] = '---'
             half[murh[i][1]-1][murh[i][0]] = '----'
         #AFFICHER TABLEAU
-        print(f'Légende: 1={self.état["joueurs"][0]["nom"]}, 2={self.état["joueurs"][1]["nom"]}')
+        print(f'Légende: 1={self.joueurs["joueurs"][0]["nom"]}, 2={self.joueurs["joueurs"][1]["nom"]}')
         print(lhead1)
         for y in range(9, 0, -1):
             lignefull= f'{y}' + vdebut
@@ -242,19 +256,24 @@ class Quoridor():
         print(lfoot2)
 
     def jouer_coup(self, numero):
+        graphe = construire_graphe([self.joueurs['joueurs'][0]['pos'],self.joueurs['joueurs'][1]['pos']],
+            self.murs['horizontaux'],
+            self.murs['verticaux'])
         self.numero = numero
-        if self.numero != 1 or self.numero != 2:
-            raise QuoridorError
-        chemin1 = nx.shortest_path(graphe, self.joueurs[0]['pos'], 'B1')
-        chemin2 = nx.shortest_path(graphe, self.joueurs[1]['pos'], 'B2')
-        elif self.numero == 1:
-            if self.joueurs[0]['murs'] == 0:
-                self.deplacer_jeton(self.numero, chemin1[0])
-                self.joueurs[self.numero-1]['pos'] = chemin1[0] 
+        if self.numero != 1 and self.numero != 2:
+            raise QuoridorError('Le numéro du joueur doit soit être 1 ou 2')
+        chemin1 = nx.shortest_path(graphe, self.joueurs['joueurs'][0]['pos'], 'B1')
+        chemin2 = nx.shortest_path(graphe, self.joueurs['joueurs'][1]['pos'], 'B2')
+        if self.numero == 1:
+            if self.joueurs['joueurs'][0]['murs'] == 0:
+                self.déplacer_jeton(self.numero, chemin1[1])
+                self.joueurs['joueurs'][self.numero-1]['pos'] = chemin1[1]
+                return ('déplacer jeton', chemin1[1])
             else:
                 if len(chemin2) >= 4:
-                    self.deplacer_jeton(self.numero, chemin1[0])
-                    self.joueurs[self.numero-1]['pos'] = chemin1[0]
+                    self.déplacer_jeton(self.numero, chemin1[1])
+                    self.joueurs['joueurs'][self.numero-1]['pos'] = chemin1[1]
+                    return ('déplacer jeton', chemin1[1])
                 else:
                     listepostesth = []
                     listepostestv = []
@@ -278,21 +297,22 @@ class Quoridor():
                                     for h in self.murs['horizontaux']:
                                         if positiontest == (h[0]+1, v[1]-1):
                                             listepostestv = listepostestv
-                                            else:
-                                                listepostestv.append(positiontestv)
+                                        else:
+                                            listepostestv.append(positiontest)
                     self.placer_mur(self.numero, listepostestv[0], 'vertical')
-                    self.murs['verticaux'].append(position)
-                    self.joueurs[self.numero-1]['murs'] = self.joueurs[self.numero-1]['murs']-1    
-                    
-                            
+                    self.murs['verticaux'].append(listepostestv[0])
+                    self.joueurs['joueurs'][self.numero-1]['murs'] = self.joueurs['joueurs'][self.numero-1]['murs']-1
+                    return ('placer mur vertical', listepostestv[0])                   
         elif self.numero == 2:
-            if self.joueurs[1]['murs'] == 0:
-                self.deplacer_jeton(self.numero, chemin2[0])
-                self.joueurs[self.numero-1]['pos'] = chemin2[0] 
+            if self.joueurs['joueurs'][1]['murs'] == 0:
+                self.déplacer_jeton(self.numero, chemin2[1])
+                self.joueurs['joueurs'][self.numero-1]['pos'] = chemin2[1]
+                return ('déplacer jeton', chemin2[1])
             else:
                 if len(chemin1) >= 4:
-                    self.deplacer_jeton(self.numero, chemin2[0])
-                    self.joueurs[self.numero-1]['pos'] = chemin2[0] 
+                    self.déplacer_jeton(self.numero, chemin2[1])
+                    self.joueurs['joueurs'][self.numero-1]['pos'] = chemin2[1]
+                    return ('déplacer jeton', chemin2[1])
                 else:
                     listepostesth = []
                     listepostestv = []
@@ -316,8 +336,9 @@ class Quoridor():
                                     for h in self.murs['horizontaux']:
                                         if positiontest == (h[0]+1, v[1]-1):
                                             listepostestv = listepostestv
-                                            else:
-                                                listepostestv.append(positiontestv)
+                                        else:
+                                            listepostestv.append(positiontest)
                     self.placer_mur(self.numero, listepostestv[0], 'vertical')
-                    self.murs['verticaux'].append(position)
-                    self.joueurs[self.numero-1]['murs'] = self.joueurs[self.numero-1]['murs']-1
+                    self.murs['verticaux'].append(listepostestv[0])
+                    self.joueurs['joueurs'][self.numero-1]['murs'] = self.joueurs['joueurs'][self.numero-1]['murs']-1
+                    return ('placer mur vertical', listepostestv[0])
