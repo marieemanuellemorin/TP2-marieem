@@ -81,16 +81,6 @@ def construire_graphe(joueurs, murs_horizontaux, murs_verticaux):
 
     return graphe
 
-    état = {
-    "joueurs": [
-        {"nom": namej1, "murs": nbmur1, "pos": positionj1},
-        {"nom": namej2, "murs": nbmur2, "pos": positionj2}
-    ],
-    "murs": {
-        "horizontaux": [(4, 4), (2, 6), (3, 8), (5, 8), (7, 8)],
-        "verticaux": [(6, 2), (4, 4), (2, 5), (7, 5), (7, 7)]
-    }
-}
 class QuoridorError(Exception):
     pass
 
@@ -104,17 +94,17 @@ class Quoridor():
             if len(self.joueurs) != 2:
                 raise QuoridorError('2 joueurs sont nécessaire pour initialiser une partie')
             elif type(self.joueurs[0]) is str and type(self.joueurs[1]) is str:
-                namej1 = self.joueurs[0]
-                positionj1 = (5,1)
-                nbmur1 = 10
-                namej2 = self.joueurs[1]
-                positionj2 = (5,9)
-                nbmur2 = 10
-                self.joueurs = {"joueurs": [{"nom": namej1, "murs": nbmur1, "pos": positionj1},{"nom": namej2, "murs": nbmur2, "pos": positionj2}]}
+                j1 = self.joueurs[0]
+                pj1 = (5, 1)
+                m1 = 10
+                j2 = self.joueurs[1]
+                pj2 = (5, 9)
+                m2 = 10
+                self.joueurs = {"joueurs": [{"nom": j1, "murs": m1, "pos": pj1}, {"nom": j2, "murs": m2, "pos": pj2}]}
             elif type(self.joueurs[0]) is dict and type(self.joueurs[1]) is dict:
                 self.joueurs = {"joueurs": self.joueurs}
             else:
-                raise QuoridorError('Joueurs doit soit être une liste de string, soit une liste de dictionnaires')
+                raise QuoridorError('Joueurs doit être une liste de string ou de dictionnaires')
         else:
             raise QuoridorError('Joueurs doit être une liste')
 
@@ -123,15 +113,15 @@ class Quoridor():
         self.position = position
         if (self.numero != 1) and (self.numero != 2):
             raise QuoridorError("Le numéro du joueur doit soit être 1 ou 2")
-        if self.position[0] < 1 or self.position[0] > 9 or self.position[1] < 1 or self.position[1] > 9:
+        if self.position[0] < 1 or self.position[0] > 9:
+            raise QuoridorError("La position désirée se trouve hors de la grille de jeu")
+        if self.position[1] < 1 or self.position[1] > 9:
             raise QuoridorError("La position désirée se trouve hors de la grille de jeu")
         else:
-            graphe = construire_graphe([self.joueurs['joueurs'][0]['pos'],self.joueurs['joueurs'][1]['pos']],
-            self.murs['horizontaux'],
-            self.murs['verticaux'])
-            deplacementadmissibles = list(graphe.successors(self.joueurs['joueurs'][self.numero-1]['pos']))
+            graphe = construire_graphe([self.joueurs['joueurs'][0]['pos'], self.joueurs['joueurs'][1]['pos']], self.murs['horizontaux'], self.murs['verticaux'])
+            depadmissibles = list(graphe.successors(self.joueurs['joueurs'][self.numero-1]['pos']))
             dep = []
-            for p in deplacementadmissibles:
+            for p in depadmissibles:
                 if self.position == p:
                     dep.append(p)
             if len(dep) == 1:
@@ -146,16 +136,18 @@ class Quoridor():
         if self.numero != 1 and self.numero != 2:
             raise QuoridorError('Le numéro du joueur doit soit être 1 ou 2')
         elif self.orientation != 'horizontal' and self.orientation != 'vertical':
-            raise QuoridorError("L'orientation du mur doit soit être 'horizontal' ou 'vertical'")
+            raise QuoridorError("L'orientation soit être 'horizontal' ou 'vertical'")
         elif type(self.position) is not tuple:
-            raise QuoridorError('la coordonnée doit être entrée sous forme de tuple')
+            raise QuoridorError('la coordonnée doit être sous forme de tuple')
         elif len(self.position) != 2:
             raise QuoridorError('la coordonnée doit être de la forme (x, y)')
         elif self.joueurs['joueurs'][self.numero - 1]['murs'] == 0:
             raise QuoridorError('Il ne reste plus de murs disponibles à placer')
         # murs horizontaux
         elif self.orientation == 'horizontal':
-            if self.position[0] < 1 or self.position[0] > 8 or self.position[1] < 2 or self.position[1] > 9:
+            if self.position[0] < 1 or self.position[0] > 8:
+                raise QuoridorError('La position désirée est hors de la grille de jeu')
+            if self.position[1] < 2 or self.position[1] > 9:
                 raise QuoridorError('La position désirée est hors de la grille de jeu')
             for h in self.murs['horizontaux']:
                 if self.position == h:
@@ -170,7 +162,9 @@ class Quoridor():
             self.murs['horizontaux'].append(position)
         # murs verticaux
         elif self.orientation == 'vertical':
-            if self.position[0] < 2 or self.position[0] > 9 or self.position[1] < 1 or self.position[1] > 8:
+            if self.position[0] < 2 or self.position[0] > 9:
+                raise QuoridorError('La position désirée est hors de la grille de jeu')
+            if self.position[1] < 1 or self.position[1] > 8:
                 raise QuoridorError('La position désirée est hors de la grille de jeu')
             for v in self.murs['verticaux']:
                 if self.position == v:
@@ -186,9 +180,7 @@ class Quoridor():
         self.joueurs['joueurs'][self.numero-1]['murs'] = self.joueurs['joueurs'][self.numero-1]['murs']-1
 
     def partie_terminée(self):
-        graphe = construire_graphe([self.joueurs['joueurs'][0]['pos'],self.joueurs['joueurs'][1]['pos']],
-            self.murs['horizontaux'],
-            self.murs['verticaux'])
+        graphe = construire_graphe([self.joueurs['joueurs'][0]['pos'], self.joueurs['joueurs'][1]['pos']], self.murs['horizontaux'], self.murs['verticaux'])
         if nx.has_path(graphe, self.joueurs['joueurs'][0]['pos'], 'B1') == False:
             return self.joueurs['joueurs'][1]['nom']
         if nx.has_path(graphe, self.joueurs['joueurs'][1]['pos'], 'B2') == False:
@@ -238,7 +230,7 @@ class Quoridor():
         print(f'Légende: 1={self.joueurs["joueurs"][0]["nom"]}, 2={self.joueurs["joueurs"][1]["nom"]}')
         print(lhead1)
         for y in range(9, 0, -1):
-            lignefull= f'{y}' + vdebut
+            lignefull = f'{y}' + vdebut
             lignehalf = hdebut
             for x in range(1, 10):
                 if (len(f'{full[y-1][x-1]}') == 3) and (x > 1):
@@ -256,9 +248,7 @@ class Quoridor():
         print(lfoot2)
 
     def jouer_coup(self, numero):
-        graphe = construire_graphe([self.joueurs['joueurs'][0]['pos'],self.joueurs['joueurs'][1]['pos']],
-            self.murs['horizontaux'],
-            self.murs['verticaux'])
+        graphe = construire_graphe([self.joueurs['joueurs'][0]['pos'], self.joueurs['joueurs'][1]['pos']], self.murs['horizontaux'], self.murs['verticaux'])
         self.numero = numero
         if self.numero != 1 and self.numero != 2:
             raise QuoridorError('Le numéro du joueur doit soit être 1 ou 2')
@@ -277,11 +267,13 @@ class Quoridor():
                 else:
                     listepostesth = []
                     listepostestv = []
-                    for x in range(1,9):
-                        for y in range(1,9):
+                    for x in range(1, 9):
+                        for y in range(1, 9):
                             positiontest = (x, y)
                             for h in self.murs['horizontaux']:
-                                if positiontest == h or positiontest == (h[0]+1, h[1]) or positiontest == (h[0]-1, h[1]):
+                                if positiontest == h or positiontest == (h[0]+1, h[1]):
+                                    listepostesth = listepostesth
+                                elif positiontest == (h[0]-1, h[1]):
                                     listepostesth = listepostesth
                                 else:
                                      for v in self.murs['verticaux']:
@@ -291,7 +283,9 @@ class Quoridor():
                                             listepostesth.append(positiontest)
                             #murs vertical
                             for v in self.murs['verticaux']:
-                                if positiontest == v or positiontest == (h[0], h[1]+1) or positiontest == (h[0], h[1]-1):
+                                if positiontest == v or positiontest == (h[0], h[1]+1):
+                                    listepostestv = listepostestv
+                                elif positiontest == (h[0], h[1]-1):
                                     listepostestv = listepostestv
                                 else:
                                     for h in self.murs['horizontaux']:
@@ -316,11 +310,13 @@ class Quoridor():
                 else:
                     listepostesth = []
                     listepostestv = []
-                    for x in range(1,9):
-                        for y in range(1,9):
+                    for x in range(1, 9):
+                        for y in range(1, 9):
                             positiontest = (x, y)
                             for h in self.murs['horizontaux']:
-                                if positiontest == h or positiontest == (h[0]+1, h[1]) or positiontest == (h[0]-1, h[1]):
+                                if positiontest == h or positiontest == (h[0]+1, h[1]):
+                                    listepostesth = listepostesth
+                                elif positiontest == (h[0]-1, h[1]):
                                     listepostesth = listepostesth
                                 else:
                                      for v in self.murs['verticaux']:
@@ -330,7 +326,9 @@ class Quoridor():
                                             listepostesth.append(positiontest)
                             #murs vertical
                             for v in self.murs['verticaux']:
-                                if positiontest == v or positiontest == (h[0], h[1]+1) or positiontest == (h[0], h[1]-1):
+                                if positiontest == v or positiontest == (h[0], h[1]+1):
+                                    listepostestv = listepostestv
+                                elif positiontest == (h[0], h[1]-1):
                                     listepostestv = listepostestv
                                 else:
                                     for h in self.murs['horizontaux']:
